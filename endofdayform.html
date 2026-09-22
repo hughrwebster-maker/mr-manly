@@ -223,7 +223,6 @@
     }
 
     .report .center { text-align: center; }
-    .report .right { text-align: right; }
     .report .title {
       font-size: 18px;
       font-weight: 700;
@@ -307,7 +306,6 @@
     <div class="toolbar">
       <button class="btn-primary" onclick="exportToPDF()">Export to PDF</button>
       <button class="btn-secondary" onclick="window.print()">Print Preview</button>
-      <button class="btn-secondary" onclick="fillDemo()">Load Demo Data</button>
       <button class="btn-secondary" onclick="clearForm()">Clear Form</button>
     </div>
   </header>
@@ -665,7 +663,7 @@
 
       html.push(tableToHtml(
         "ACTIVITY LOG",
-        ["Start time", "End time", "Activity/request for service", "Actions/Outcomes and staff", "Vehicles / vessels involved"],
+        ["Start time", "End time", "Activity / request for service", "Actions / outcomes and staff", "Vehicles / vessels involved"],
         activities.length ? activities : [["", "", "", "", ""]]
       ));
       html.push(`<div class="dynamic-note">To add or delete activity please select from the drop-down list and click in the checkbox [ ]</div>`);
@@ -729,45 +727,6 @@
       addNonAttendance();
       addVehicle();
       addActivity();
-      updatePreview();
-    }
-
-    function fillDemo() {
-      clearForm();
-      document.getElementById("unitName").value = "MRQ Unit 10";
-      document.getElementById("udoName").value = "Alex Morgan";
-      document.getElementById("shiftStartDate").value = "2026-09-22";
-      document.getElementById("shiftStartTime").value = "06:00";
-      document.getElementById("shiftEndDate").value = "2026-09-22";
-      document.getElementById("shiftEndTime").value = "18:00";
-
-      document.querySelector("#rosteredInputs .entry-card:nth-child(1) .r-name").value = "Jamie Lee";
-      document.querySelector("#rosteredInputs .entry-card:nth-child(1) .r-role").value = "Crew";
-      document.querySelector("#rosteredInputs .entry-card:nth-child(1) .r-hours").value = "12";
-
-      document.querySelector("#nonAttendanceInputs .entry-card:nth-child(1) .na-name").value = "Pat Brown";
-      document.querySelector("#nonAttendanceInputs .entry-card:nth-child(1) .na-hours").value = "12";
-      document.querySelector("#nonAttendanceInputs .entry-card:nth-child(1) .na-reason").value = "Sick leave";
-
-      document.querySelector("#vehicleInputs .entry-card:nth-child(1) .v-a").value = "MRQ-10";
-      document.querySelector("#vehicleInputs .entry-card:nth-child(1) .v-b").value = "Sam Patel";
-      document.querySelector("#vehicleInputs .entry-card:nth-child(1) .v-c").value = "3";
-      document.querySelector("#vehicleInputs .entry-card:nth-child(1) .v-d").value = "07:15";
-      document.querySelector("#vehicleInputs .entry-card:nth-child(1) .v-e").value = "10:30";
-      document.querySelector("#vehicleInputs .entry-card:nth-child(1) .v-f").value = "Incident response";
-
-      document.querySelector("#activityInputs .entry-card:nth-child(1) .a-start").value = "07:10";
-      document.querySelector("#activityInputs .entry-card:nth-child(1) .a-end").value = "08:00";
-      document.querySelector("#activityInputs .entry-card:nth-child(1) .a-act").value = "Launch vessel";
-      document.querySelector("#activityInputs .entry-card:nth-child(1) .a-out").value = "Pre-start checks completed";
-      document.querySelector("#activityInputs .entry-card:nth-child(1) .a-veh").value = "MRQ-10";
-
-      document.getElementById("mrq6Yes").checked = true;
-      document.getElementById("tmrYes").checked = true;
-      document.getElementById("qpsSystem").value = "SEMS";
-      document.getElementById("coastalRadioYes").checked = true;
-      document.getElementById("coastalRadioHours").value = "2 hours";
-
       updatePreview();
     }
 
@@ -837,16 +796,12 @@
         { key: "v", cls: "a-veh" }
       ]);
 
-      const unitName = clean(document.getElementById("unitName").value);
-      const udoName = clean(document.getElementById("udoName").value);
-
       const dd = {
         pageSize: "A4",
         pageMargins: [18, 18, 18, 18],
         defaultStyle: { fontSize: 8.5 },
         styles: {
           title: { fontSize: 13, bold: true, alignment: "center" },
-          subtitle: { fontSize: 11, bold: true, alignment: "center" },
           section: { fontSize: 9.5, bold: true, alignment: "left", fillColor: "#f3f3f3" },
           th: { bold: true, fillColor: "#f1f1f1" },
           td: { fontSize: 8 },
@@ -876,14 +831,13 @@
             ],
             margin: [0, 0, 0, 6]
           },
-
           {
             table: {
               widths: [60, "*", 70, "*"],
               body: [
                 [
-                  { text: "MRQ unit name:", style: "label" }, unitName,
-                  { text: "Unit Duty Officer name:", style: "label" }, udoName
+                  { text: "MRQ unit name:", style: "label" }, clean(document.getElementById("unitName").value),
+                  { text: "Unit Duty Officer name:", style: "label" }, clean(document.getElementById("udoName").value)
                 ],
                 [
                   { text: "Shift start:", style: "label" }, `${clean(document.getElementById("shiftStartDate").value)} ${clean(document.getElementById("shiftStartTime").value)}`,
@@ -913,7 +867,7 @@
 
           makePdfTable(
             "VEHICLE AND VESSEL USE",
-            ["Registration", "Driver or vessel master", "Crew", "Time out", "Time in", "Purpose of use"],
+            ["Registration of vehicle/vessel", "Name of driver/vessel master", "Crew", "Time out", "Time in", "Purpose of use"],
             vehicles.length ? vehicles.map(v => [v.a, v.b, v.c, v.d, v.e, v.f]) : [["", "", "", "", "", ""]],
             [70, 90, 35, 40, 40, 105]
           ),
@@ -990,10 +944,7 @@
             },
             layout: "mrqTable"
           }
-        ],
-        pageBreakBefore: function(currentNode) {
-          return false;
-        }
+        ]
       };
 
       pdfMake.createPdf(dd).download("MRQ-End-of-Shift-Report.pdf");
