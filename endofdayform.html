@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MRQ End of Shift Report PDF Export</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --border: #222;
+      --light: #f5f5f5;
+      --muted: #666;
+      --accent: #0b5cab;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #111;
+      background: #f0f2f5;
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 16px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 {
+      margin: 0 0 6px 0;
+      font-size: 20px;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 6px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #e9ecef;
+      color: #111;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 18px;
+      padding: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid #bbb;
+      border-radius: 6px;
+      font: inherit;
+      background: #fff;
+    }
+
+    .field textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    .inline {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .section-title {
+      margin-top: 18px;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 10px;
+      background: #f8f9fb;
+      border: 1px solid #eee;
+      border-radius: 6px;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .small-btn {
+      padding: 7px 10px;
+      font-size: 12px;
+    }
+
+    .entries {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .entry-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fcfcfc;
+      display: grid;
+      gap: 8px;
+    }
+
+    .entry-card .topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .entry-card .topline strong {
+      font-size: 13px;
+    }
+
+    .remove-link {
+      background: transparent;
+      color: #b00020;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* Preview / PDF area */
+    .preview-wrap {
+      overflow: auto;
+      background: #eef1f6;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px dashed #c9ced8;
+    }
+
+    .report {
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      color: #000;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .report table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .report td,
+    .report th {
+      border: 1px solid var(--border);
+      padding: 4px 6px;
+      vertical-align: top;
+      word-wrap: break-word;
+    }
+
+    .report .center { text-align: center; }
+    .report .right { text-align: right; }
+    .report .title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .report .small { font-size: 10px; }
+    .report .section {
+      font-size: 12px;
+      font-weight: 700;
+      background: #fff;
+    }
+    .report .gray { background: #f1f1f1; }
+    .report .label { font-weight: 700; white-space: nowrap; }
+
+    .report .checkbox {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 1px solid #111;
+      vertical-align: middle;
+      margin: 0 4px 0 0;
+    }
+
+    .report .check-yes::after {
+      content: "✓";
+      font-size: 12px;
+      line-height: 10px;
+      position: relative;
+      top: -1px;
+      left: 1px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media print {
+      body { background: white; }
+      header,
+      .panel.form-panel,
+      .no-print {
+        display: none !important;
+      }
+      .container {
+        grid-template-columns: 1fr;
+        padding: 0;
+      }
+      .preview-wrap {
+        border: none;
+        padding: 0;
+        background: white;
+      }
+      .report {
+        border: none;
+        max-width: none;
+        width: 100%;
+        font-size: 10.5px;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="no-print">
+    <h1>MRQ End of Shift Report Generator</h1>
+    <p>Fill in the form, preview the report, and export it to PDF.</p>
+    <div class="toolbar">
+      <button class="btn-primary" onclick="exportToPDF()">Export to PDF</button>
+      <button class="btn-secondary" onclick="window.print()">Print</button>
+      <button class="btn-secondary" onclick="fillDemo()">Load Demo Data</button>
+      <button class="btn-secondary" onclick="clearForm()">Clear Form</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- FORM PANEL -->
+    <section class="panel form-panel no-print">
+      <h2>Report Inputs</h2>
+
+      <div class="form-grid">
+        <div class="inline">
+          <div class="field">
+            <label for="unitName">MRQ unit name</label>
+            <input id="unitName" type="text" placeholder="Unit name" />
+          </div>
+          <div class="field">
+            <label for="udoName">Unit Duty Officer name</label>
+            <input id="udoName" type="text" placeholder="UDO name" />
+          </div>
+        </div>
+
+        <div class="inline">
+          <div class="field">
+            <label for="shiftStartDate">Shift start date</label>
+            <input id="shiftStartDate" type="date" />
+          </div>
+          <div class="field">
+            <label for="shiftStartTime">Shift start time</label>
+            <input id="shiftStartTime" type="time" />
+          </div>
+        </div>
+
+        <div class="inline">
+          <div class="field">
+            <label for="shiftEndDate">Shift end date</label>
+            <input id="shiftEndDate" type="date" />
+          </div>
+          <div class="field">
+            <label for="shiftEndTime">Shift end time</label>
+            <input id="shiftEndTime" type="time" />
+          </div>
+        </div>
+
+        <div class="section-title">Rostered Staff</div>
+        <div id="rosteredInputs" class="entries"></div>
+        <div class="row-actions">
+          <button class="btn-secondary small-btn" type="button" onclick="addRosteredStaff()">Add rostered staff</button>
+        </div>
+
+        <div class="section-title">Non-attendance of Rostered Staff</div>
+        <div id="nonAttendanceInputs" class="entries"></div>
+        <div class="row-actions">
+          <button class="btn-secondary small-btn" type="button" onclick="addNonAttendance()">Add non-attendance</button>
+        </div>
+
+        <div class="section-title">Vehicle and Vessel Use</div>
+        <div id="vehicleInputs" class="entries"></div>
+        <div class="row-actions">
+          <button class="btn-secondary small-btn" type="button" onclick="addVehicle()">Add vehicle or vessel</button>
+        </div>
+
+        <div class="section-title">Activity Log</div>
+        <div id="activityInputs" class="entries"></div>
+        <div class="row-actions">
+          <button class="btn-secondary small-btn" type="button" onclick="addActivity()">Add activity</button>
+        </div>
+
+        <div class="section-title">Reportable Events</div>
+        <div class="field">
+          <label><input id="injuryYes" type="checkbox" /> MRQ member injury/illness</label>
+          <input id="injuryLog" type="text" placeholder="Activity Log number" />
+        </div>
+        <div class="field">
+          <label><input id="damageYes" type="checkbox" /> MRQ damage vehicle or vessel</label>
+          <input id="damageLog" type="text" placeholder="Activity Log number" />
+        </div>
+        <div class="field">
+          <label><input id="significantYes" type="checkbox" /> Significant events</label>
+          <input id="significantLog" type="text" placeholder="Activity Log number" />
+        </div>
+        <div class="field">
+          <label><input id="amsaYes" type="checkbox" /> AMSA incident</label>
+          <input id="amsaLog" type="text" placeholder="Activity Log number" />
+        </div>
+        <div class="field">
+          <label><input id="msqYes" type="checkbox" /> MSQ incident</label>
+          <input id="msqLog" type="text" placeholder="Activity Log number" />
+        </div>
+
+        <div class="section-title">UDO Checklist</div>
+        <div class="field"><label><input id="mrq6Yes" type="checkbox" /> MRQ 0006 completed</label></div>
+        <div class="field"><label><input id="mrq14Yes" type="checkbox" /> MRQ 0014 Significant Event Report completed</label></div>
+        <div class="field"><label><input id="amsaFormYes" type="checkbox" /> AMSA Form 18 or 19 completed</label></div>
+        <div class="field"><label><input id="tmrYes" type="checkbox" /> TMR F3071 completed</label></div>
+
+        <div class="section-title">QPS System</div>
+        <div class="field">
+          <label for="qpsSystem">System</label>
+          <select id="qpsSystem">
+            <option value="">Select</option>
+            <option>I/INRS System</option>
+            <option>SEMS</option>
+            <option>OffShore SMS</option>
+          </select>
+        </div>
+
+        <div class="section-title">Other Periods</div>
+        <div class="field">
+          <label><input id="coastalRadioYes" type="checkbox" /> Any non-staffed coastal station radio periods</label>
+          <input id="coastalRadioHours" type="text" placeholder="Duration of hours / times" />
+        </div>
+        <div class="field">
+          <label><input id="vesselNoStaffYes" type="checkbox" /> Any non-staffing of vessel periods</label>
+          <input id="vesselNoStaffHours" type="text" placeholder="Duration of hours / times" />
+        </div>
+      </div>
+    </section>
+
+    <!-- PREVIEW -->
+    <section class="preview-wrap">
+      <div class="report" id="report">
+        <table class="header-table">
+          <tr>
+            <td style="width: 120px; text-align:center;">
+              <div class="small">[LOGO]</div>
+            </td>
+            <td class="center">
+              <div class="title">MARINE RESCUE QUEENSLAND</div>
+              <div class="title">END OF SHIFT REPORT</div>
+            </td>
+            <td style="width: 160px; text-align:center;">
+              <div class="small">MRQ 00010</div>
+              <div class="small">06/24 Δ1</div>
+            </td>
+          </tr>
+        </table>
+
+        <table>
+          <tr>
+            <td class="label">MRQ unit name:</td>
+            <td id="pUnitName"></td>
+            <td class="label">Unit Duty Officer name:</td>
+            <td id="pUdoName"></td>
+          </tr>
+          <tr>
+            <td class="label">Shift start:</td>
+            <td id="pShiftStart"></td>
+            <td class="label">Shift end:</td>
+            <td id="pShiftEnd"></td>
+          </tr>
+        </table>
+
+        <table>
+          <tr><td class="section" colspan="6">ROSTERED STAFF</td></tr>
+          <tr class="gray">
+            <th>Full name</th>
+            <th>Role</th>
+            <th>Rostered hours</th>
+            <th>Full name</th>
+            <th>Role</th>
+            <th>Rostered hours</th>
+          </tr>
+          <tr>
+            <td id="r1n"></td><td id="r1r"></td><td id="r1h"></td>
+            <td id="r2n"></td><td id="r2r"></td><td id="r2h"></td>
+          </tr>
+          <tr>
+            <td id="r3n"></td><td id="r3r"></td><td id="r3h"></td>
+            <td id="r4n"></td><td id="r4r"></td><td id="r4h"></td>
+          </tr>
+          <tr>
+            <td colspan="6" class="small">To add or delete rostered staff, please select from the drop-down list and click in the checkbox [ ]</td>
+          </tr>
+        </table>
+
+        <table>
+          <tr><td class="section" colspan="3">RECORD NON-ATTENDANCE OF ROSTERED STAFF</td></tr>
+          <tr class="gray">
+            <th>Full name</th><th>Rostered hours</th><th>Reason</th>
+          </tr>
+          <tr><td id="na1n"></td><td id="na1h"></td><td id="na1r"></td></tr>
+          <tr><td id="na2n"></td><td id="na2h"></td><td id="na2r"></td></tr>
+          <tr>
+            <td colspan="3" class="small">To add or delete non-attendance staff, please select from the drop-down list and click in the checkbox [ ]</td>
+          </tr>
+        </table>
+
+        <table>
+          <tr><td class="section" colspan="6">VEHICLE AND VESSEL USE</td></tr>
+          <tr class="gray">
+            <th>Registration of vehicle/vessel</th>
+            <th>Name of driver/vessel master</th>
+            <th>Crew</th>
+            <th>Time out</th>
+            <th>Time in</th>
+            <th>Purpose of use</th>
+          </tr>
+          <tr>
+            <td id="v1a"></td><td id="v1b"></td><td id="v1c"></td><td id="v1d"></td><td id="v1e"></td><td id="v1f"></td>
+          </tr>
+          <tr>
+            <td id="v2a"></td><td id="v2b"></td><td id="v2c"></td><td id="v2d"></td><td id="v2e"></td><td id="v2f"></td>
+          </tr>
+          <tr>
+            <td colspan="6" class="small">To add or delete vehicles or vessels, please select from the drop-down list and click in the checkbox [ ]</td>
+          </tr>
+        </table>
+
+        <table>
+          <tr><td class="section" colspan="6">ACTIVITY LOG</td></tr>
+          <tr class="gray">
+            <th>Log no.</th>
+            <th>Start time</th>
+            <th>End time</th>
+            <th>Activity/request for service</th>
+            <th>Actions/Outcomes and staff</th>
+            <th>Vehicles / vessels involved</th>
+          </tr>
+          <tr><td><b>1</b></td><td id="a1s"></td><td id="a1e"></td><td id="a1a"></td><td id="a1o"></td><td id="a1v"></td></tr>
+          <tr><td><b>2</b></td><td id="a2s"></td><td id="a2e"></td><td id="a2a"></td><td id="a2o"></td><td id="a2v"></td></tr>
+          <tr><td><b>3</b></td><td id="a3s"></td><td id="a3e"></td><td id="a3a"></td><td id="a3o"></td><td id="a3v"></td></tr>
+          <tr><td><b>4</b></td><td id="a4s"></td><td id="a4e"></td><td id="a4a"></td><td id="a4o"></td><td id="a4v"></td></tr>
+          <tr><td><b>5</b></td><td id="a5s"></td><td id="a5e"></td><td id="a5a"></td><td id="a5o"></td><td id="a5v"></td></tr>
+          <tr><td><b>6</b></td><td id="a6s"></td><td id="a6e"></td><td id="a6a"></td><td id="a6o"></td><td id="a6v"></td></tr>
+          <tr><td><b>7</b></td><td id="a7s"></td><td id="a7e"></td><td id="a7a"></td><td id="a7o"></td><td id="a7v"></td></tr>
+          <tr><td><b>8</b></td><td id="a8s"></td><td id="a8e"></td><td id="a8a"></td><td id="a8o"></td><td id="a8v"></td></tr>
+          <tr><td><b>9</b></td><td id="a9s"></td><td id="a9e"></td><td id="a9a"></td><td id="a9o"></td><td id="a9v"></td></tr>
+          <tr><td><b>10</b></td><td id="a10s"></td><td id="a10e"></td><td id="a10a"></td><td id="a10o"></td><td id="a10v"></td></tr>
+          <tr>
+            <td colspan="6" class="small">To add or delete activity please select from the drop-down list and click in the checkbox [ ]</td>
+          </tr>
+        </table>
+
+        <table>
+          <tr>
+            <td class="section" style="width: 34%;">REPORTABLE EVENTS</td>
+            <td class="section" style="width: 33%;">UDO CHECKLIST</td>
+            <td class="section" style="width: 33%;">QPS SYSTEM</td>
+          </tr>
+
+          <tr>
+            <td>MRQ member injury/illness: <span id="injuryCheck" class="checkbox"></span> Yes<br><span class="label">Activity Log #:</span> <span id="injuryLogOut"></span></td>
+            <td>MRQ 0006 completed <span id="mrq6Check" class="checkbox"></span> Yes <span id="mrq6No" class="checkbox"></span> No</td>
+            <td id="qps1">I/INRS System</td>
+          </tr>
+          <tr>
+            <td>MRQ damage vehicle or vessel: <span id="damageCheck" class="checkbox"></span> Yes<br><span class="label">Activity Log #:</span> <span id="damageLogOut"></span></td>
+            <td>MRQ 0014 Significant Event Report completed <span id="mrq14Check" class="checkbox"></span> Yes <span id="mrq14No" class="checkbox"></span> No</td>
+            <td id="qps2"></td>
+          </tr>
+          <tr>
+            <td>Significant events: <span id="significantCheck" class="checkbox"></span> Yes<br><span class="label">Activity Log #:</span> <span id="significantLogOut"></span></td>
+            <td>AMSA Form 18 or 19 completed <span id="amsaFormCheck" class="checkbox"></span> Yes <span id="amsaFormNo" class="checkbox"></span> No</td>
+            <td id="qps3">SEMS</td>
+          </tr>
+          <tr>
+            <td>AMSA incident: <span id="amsaCheck" class="checkbox"></span> Yes<br><span class="label">Activity Log #:</span> <span id="amsaLogOut"></span></td>
+            <td>TMR F3071 completed <span id="tmrCheck" class="checkbox"></span> Yes <span id="tmrNo" class="checkbox"></span> No</td>
+            <td id="qps4">OffShore SMS</td>
+          </tr>
+          <tr>
+            <td>MSQ incident: <span id="msqCheck" class="checkbox"></span> Yes<br><span class="label">Activity Log #:</span> <span id="msqLogOut"></span></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </table>
+
+        <table>
+          <tr>
+            <td>Any non-staffed coastal station radio periods <span id="coastalCheck" class="checkbox"></span> Yes</td>
+            <td><span class="label">Duration of hours:</span> <span id="coastalHoursOut"></span></td>
+          </tr>
+          <tr>
+            <td>Any non-staffing of vessel periods <span id="vesselCheck" class="checkbox"></span> Yes</td>
+            <td><span class="label">Duration of hours:</span> <span id="vesselHoursOut"></span></td>
+          </tr>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function setText(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = escapeHtml(value || "");
+    }
+
+    function formatDateTime(dateId, timeId) {
+      const d = document.getElementById(dateId).value;
+      const t = document.getElementById(timeId).value;
+      if (!d && !t) return "";
+      return [d, t].filter(Boolean).join(" ");
+    }
+
+    function checkboxMark(checked) {
+      return checked ? "check-yes" : "";
+    }
+
+    function addRosteredStaff(name = "", role = "", hours = "") {
+      const container = document.getElementById("rosteredInputs");
+      const idx = container.children.length + 1;
+      const wrap = document.createElement("div");
+      wrap.className = "entry-card";
+      wrap.innerHTML = `
+        <div class="topline">
+          <strong>Rostered staff ${idx}</strong>
+          <button class="remove-link" type="button">Remove</button>
+        </div>
+        <div class="inline">
+          <div class="field"><label>Full name</label><input type="text" class="r-name" value="${escapeHtml(name)}"></div>
+          <div class="field"><label>Role</label><input type="text" class="r-role" value="${escapeHtml(role)}"></div>
+        </div>
+        <div class="field"><label>Rostered hours</label><input type="text" class="r-hours" value="${escapeHtml(hours)}"></div>
+      `;
+      wrap.querySelector(".remove-link").onclick = () => wrap.remove();
+      container.appendChild(wrap);
+    }
+
+    function addNonAttendance(name = "", hours = "", reason = "") {
+      const container = document.getElementById("nonAttendanceInputs");
+      const idx = container.children.length + 1;
+      const wrap = document.createElement("div");
+      wrap.className = "entry-card";
+      wrap.innerHTML = `
+        <div class="topline">
+          <strong>Non-attendance ${idx}</strong>
+          <button class="remove-link" type="button">Remove</button>
+        </div>
+        <div class="inline">
+          <div class="field"><label>Full name</label><input type="text" class="na-name" value="${escapeHtml(name)}"></div>
+          <div class="field"><label>Rostered hours</label><input type="text" class="na-hours" value="${escapeHtml(hours)}"></div>
+        </div>
+        <div class="field"><label>Reason</label><input type="text" class="na-reason" value="${escapeHtml(reason)}"></div>
+      `;
+      wrap.querySelector(".remove-link").onclick = () => wrap.remove();
+      container.appendChild(wrap);
+    }
+
+    function addVehicle(a = "", b = "", c = "", d = "", e = "", f = "") {
+      const container = document.getElementById("vehicleInputs");
+      const idx = container.children.length + 1;
+      const wrap = document.createElement("div");
+      wrap.className = "entry-card";
+      wrap.innerHTML = `
+        <div class="topline">
+          <strong>Vehicle or vessel ${idx}</strong>
+          <button class="remove-link" type="button">Remove</button>
+        </div>
+        <div class="field"><label>Registration</label><input type="text" class="v-a" value="${escapeHtml(a)}"></div>
+        <div class="inline">
+          <div class="field"><label>Name of driver / vessel master</label><input type="text" class="v-b" value="${escapeHtml(b)}"></div>
+          <div class="field"><label>Crew</label><input type="text" class="v-c" value="${escapeHtml(c)}"></div>
+        </div>
+        <div class="inline">
+          <div class="field"><label>Time out</label><input type="text" class="v-d" value="${escapeHtml(d)}"></div>
+          <div class="field"><label>Time in</label><input type="text" class="v-e" value="${escapeHtml(e)}"></div>
+        </div>
+        <div class="field"><label>Purpose of use</label><input type="text" class="v-f" value="${escapeHtml(f)}"></div>
+      `;
+      wrap.querySelector(".remove-link").onclick = () => wrap.remove();
+      container.appendChild(wrap);
+    }
+
+    function addActivity(s = "", e = "", a = "", o = "", v = "") {
+      const container = document.getElementById("activityInputs");
+      const idx = container.children.length + 1;
+      const wrap = document.createElement("div");
+      wrap.className = "entry-card";
+      wrap.innerHTML = `
+        <div class="topline">
+          <strong>Activity ${idx}</strong>
+          <button class="remove-link" type="button">Remove</button>
+        </div>
+        <div class="inline">
+          <div class="field"><label>Start time</label><input type="text" class="a-start" value="${escapeHtml(s)}"></div>
+          <div class="field"><label>End time</label><input type="text" class="a-end" value="${escapeHtml(e)}"></div>
+        </div>
+        <div class="field"><label>Activity / request for service</label><input type="text" class="a-act" value="${escapeHtml(a)}"></div>
+        <div class="field"><label>Actions / outcomes and staff</label><textarea class="a-out">${escapeHtml(o)}</textarea></div>
+        <div class="field"><label>Vehicles / vessels involved</label><input type="text" class="a-veh" value="${escapeHtml(v)}"></div>
+      `;
+      wrap.querySelector(".remove-link").onclick = () => wrap.remove();
+      container.appendChild(wrap);
+    }
+
+    function fillTableRow(prefix, fields, maxRows) {
+      for (let i = 1; i <= maxRows; i++) {
+        const vals = fields[i - 1] || {};
+        Object.entries(vals).forEach(([suffix, value]) => setText(`${prefix}${i}${suffix}`, value));
+      }
+    }
+
+    function updatePreview() {
+      setText("pUnitName", document.getElementById("unitName").value);
+      setText("pUdoName", document.getElementById("udoName").value);
+      setText("pShiftStart", formatDateTime("shiftStartDate", "shiftStartTime"));
+      setText("pShiftEnd", formatDateTime("shiftEndDate", "shiftEndTime"));
+
+      const rostered = [...document.querySelectorAll("#rosteredInputs .entry-card")].map(card => ({
+        n: card.querySelector(".r-name").value,
+        r: card.querySelector(".r-role").value,
+        h: card.querySelector(".r-hours").value
+      }));
+      fillTableRow("r", rostered.map(x => ({ n: x.n, r: x.r, h: x.h })), 4);
+
+      const nonAtt = [...document.querySelectorAll("#nonAttendanceInputs .entry-card")].map(card => ({
+        n: card.querySelector(".na-name").value,
+        h: card.querySelector(".na-hours").value,
+        r: card.querySelector(".na-reason").value
+      }));
+      fillTableRow("na", nonAtt.map(x => ({ n: x.n, h: x.h, r: x.r })), 2);
+
+      const vehicles = [...document.querySelectorAll("#vehicleInputs .entry-card")].map(card => ({
+        a: card.querySelector(".v-a").value,
+        b: card.querySelector(".v-b").value,
+        c: card.querySelector(".v-c").value,
+        d: card.querySelector(".v-d").value,
+        e: card.querySelector(".v-e").value,
+        f: card.querySelector(".v-f").value
+      }));
+      fillTableRow("v", vehicles.map(x => ({ a: x.a, b: x.b, c: x.c, d: x.d, e: x.e, f: x.f })), 2);
+
+      const activities = [...document.querySelectorAll("#activityInputs .entry-card")].map(card => ({
+        s: card.querySelector(".a-start").value,
+        e: card.querySelector(".a-end").value,
+        a: card.querySelector(".a-act").value,
+        o: card.querySelector(".a-out").value,
+        v: card.querySelector(".a-veh").value
+      }));
+      fillTableRow("a", activities.map(x => ({ s: x.s, e: x.e, a: x.a, o: x.o, v: x.v })), 10);
+
+      const reportables = [
+        ["injury", "injuryYes", "injuryLog"],
+        ["damage", "damageYes", "damageLog"],
+        ["significant", "significantYes", "significantLog"],
+        ["amsa", "amsaYes", "amsaLog"],
+        ["msq", "msqYes", "msqLog"]
+      ];
+
+      reportables.forEach(([base, cb, log]) => {
+        const checked = document.getElementById(cb).checked;
+        const out = document.getElementById(`${base}Check`);
+        if (out) out.className = `checkbox ${checkboxMark(checked)}`;
+        setText(`${base}LogOut`, document.getElementById(log).value);
+      });
+
+      const udoChecks = [
+        ["mrq6", "mrq6Yes"],
+        ["mrq14", "mrq14Yes"],
+        ["amsaForm", "amsaFormYes"],
+        ["tmr", "tmrYes"]
+      ];
+      udoChecks.forEach(([base, cb]) => {
+        const checked = document.getElementById(cb).checked;
+        const yes = document.getElementById(`${base}Check`);
+        const no = document.getElementById(`${base}No`);
+        if (yes) yes.className = `checkbox ${checkboxMark(checked)}`;
+        if (no) no.className = `checkbox ${checkboxMark(!checked)}`;
+      });
+
+      setText("qps2", document.getElementById("qpsSystem").value);
+
+      const periods = [
+        ["coastal", "coastalRadioYes", "coastalRadioHours"],
+        ["vessel", "vesselNoStaffYes", "vesselNoStaffHours"]
+      ];
+      periods.forEach(([base, cb, outField]) => {
+        const checked = document.getElementById(cb).checked;
+        const out = document.getElementById(`${base}Check`);
+        if (out) out.className = `checkbox ${checkboxMark(checked)}`;
+        setText(`${base}HoursOut`, document.getElementById(outField).value);
+      });
+    }
+
+    function clearForm() {
+      document.querySelectorAll("input[type='text'], input[type='date'], input[type='time'], textarea").forEach(el => el.value = "");
+      document.querySelectorAll("input[type='checkbox']").forEach(el => el.checked = false);
+      document.getElementById("qpsSystem").value = "";
+      document.getElementById("rosteredInputs").innerHTML = "";
+      document.getElementById("nonAttendanceInputs").innerHTML = "";
+      document.getElementById("vehicleInputs").innerHTML = "";
+      document.getElementById("activityInputs").innerHTML = "";
+
+      // re-add rows
+      addRosteredStaff();
+      addRosteredStaff();
+      addRosteredStaff();
+      addRosteredStaff();
+      addNonAttendance();
+      addNonAttendance();
+      addVehicle();
+      addVehicle();
+      for (let i = 0; i < 10; i++) addActivity();
+
+      updatePreview();
+    }
+
+    function fillDemo() {
+      clearForm();
+      document.getElementById("unitName").value = "MRQ Unit 10";
+      document.getElementById("udoName").value = "Alex Morgan";
+      document.getElementById("shiftStartDate").value = "2026-09-22";
+      document.getElementById("shiftStartTime").value = "06:00";
+      document.getElementById("shiftEndDate").value = "2026-09-22";
+      document.getElementById("shiftEndTime").value = "18:00";
+
+      document.querySelector("#rosteredInputs .entry-card:nth-child(1) .r-name").value = "Jamie Lee";
+      document.querySelector("#rosteredInputs .entry-card:nth-child(1) .r-role").value = "Crew";
+      document.querySelector("#rosteredInputs .entry-card:nth-child(1) .r-hours").value = "12";
+
+      document.querySelector("#rosteredInputs .entry-card:nth-child(2) .r-name").value = "Sam Patel";
+      document.querySelector("#rosteredInputs .entry-card:nth-child(2) .r-role").value = "Master";
+      document.querySelector("#rosteredInputs .entry-card:nth-child(2) .r-hours").value = "12";
+
+      document.querySelector("#rosteredInputs .entry-card:nth-child(3) .r-name").value = "Taylor Kim";
+      document.querySelector("#rosteredInputs .entry-card:nth-child(3) .r-role").value = "Crew";
+      document.querySelector("#rosteredInputs .entry-card:nth-child(3) .r-hours").value = "12";
+
+      document.querySelector("#rosteredInputs .entry-card:nth-child(4) .r-name").value = "Jordan Smith";
+      document.querySelector("#rosteredInputs .entry-card:nth-child(4) .r-role").value = "Crew";
+      document.querySelector("#rosteredInputs .entry-card:nth-child(4) .r-hours").value = "12";
+
+      document.querySelector("#nonAttendanceInputs .entry-card:nth-child(1) .na-name").value = "Pat Brown";
+      document.querySelector("#nonAttendanceInputs .entry-card:nth-child(1) .na-hours").value = "12";
+      document.querySelector("#nonAttendanceInputs .entry-card:nth-child(1) .na-reason").value = "Sick leave";
+
+      document.querySelector("#vehicleInputs .entry-card:nth-child(1) .v-a").value = "MRQ-10";
+      document.querySelector("#vehicleInputs .entry-card:nth-child(1) .v-b").value = "Sam Patel";
+      document.querySelector("#vehicleInputs .entry-card:nth-child(1) .v-c").value = "3";
+      document.querySelector("#vehicleInputs .entry-card:nth-child(1) .v-d").value = "07:15";
+      document.querySelector("#vehicleInputs .entry-card:nth-child(1) .v-e").value = "10:30";
+      document.querySelector("#vehicleInputs .entry-card:nth-child(1) .v-f").value = "Incident response";
+
+      document.querySelector("#activityInputs .entry-card:nth-child(1) .a-start").value = "07:10";
+      document.querySelector("#activityInputs .entry-card:nth-child(1) .a-end").value = "08:00";
+      document.querySelector("#activityInputs .entry-card:nth-child(1) .a-act").value = "Launch vessel";
+      document.querySelector("#activityInputs .entry-card:nth-child(1) .a-out").value = "Pre-start checks completed";
+      document.querySelector("#activityInputs .entry-card:nth-child(1) .a-veh").value = "MRQ-10";
+
+      document.querySelector("#activityInputs .entry-card:nth-child(2) .a-start").value = "08:15";
+      document.querySelector("#activityInputs .entry-card:nth-child(2) .a-end").value = "09:40";
+      document.querySelector("#activityInputs .entry-card:nth-child(2) .a-act").value = "Assist stranded vessel";
+      document.querySelector("#activityInputs .entry-card:nth-child(2) .a-out").value = "Tow line deployed and vessel returned to safe harbor";
+      document.querySelector("#activityInputs .entry-card:nth-child(2) .a-veh").value = "MRQ-10";
+
+      document.getElementById("mrq6Yes").checked = true;
+      document.getElementById("tmrYes").checked = true;
+      document.getElementById("qpsSystem").value = "SEMS";
+      document.getElementById("coastalRadioYes").checked = true;
+      document.getElementById("coastalRadioHours").value = "2 hours";
+
+      updatePreview();
+    }
+
+    async function exportToPDF() {
+      updatePreview();
+
+      const report = document.getElementById("report");
+      const { jsPDF } = window.jspdf;
+
+      // Increase scale for better PDF quality
+      const canvas = await html2canvas(report, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff"
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position -= pageHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save("MRQ-End-of-Shift-Report.pdf");
+    }
+
+    // Initial rows
+    addRosteredStaff();
+    addRosteredStaff();
+    addRosteredStaff();
+    addRosteredStaff();
+    addNonAttendance();
+    addNonAttendance();
+    addVehicle();
+    addVehicle();
+    for (let i = 0; i < 10; i++) addActivity();
+
+    document.addEventListener("input", updatePreview);
+    document.addEventListener("change", updatePreview);
+
+    updatePreview();
+  </script>
+</body>
+</html>
