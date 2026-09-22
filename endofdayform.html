@@ -489,18 +489,8 @@
   </div>
 
   <script>
-    // MRQ logo as inline SVG data URI
-    const mrqLogoSvg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="220" height="80" viewBox="0 0 220 80">
-        <rect width="220" height="80" fill="white"/>
-        <circle cx="38" cy="40" r="22" fill="#0b5cab"/>
-        <path d="M24 42 L38 18 L52 42 Z" fill="#ffffff"/>
-        <path d="M22 48 H54" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-        <text x="72" y="35" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#0b5cab">MRQ</text>
-        <text x="72" y="54" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#333">Marine Rescue Queensland</text>
-      </svg>
-    `;
-document.getElementById("mrqLogo").src = "mrq-logo.png";
+    // Logo file in same folder
+    document.getElementById("mrqLogo").src = "MRQ logo.png";
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -874,7 +864,7 @@ document.getElementById("mrqLogo").src = "mrq-logo.png";
 
           makePdfTable(
             "ACTIVITY LOG",
-            ["Start time", "End time", "Activity / request", "Actions / outcomes and staff", "Vehicles / vessels"],
+            ["Start time", "End time", "Activity / request", "Actions / outcomes and staff", "Vehicles / vessels involved"],
             activities.length ? activities.map(a => [a.s, a.e, a.a, a.o, a.v]) : [["", "", "", "", ""]],
             [40, 40, 100, 200, 60]
           ),
