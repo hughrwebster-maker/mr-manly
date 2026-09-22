@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MRQ End of Shift Report PDF Export</title>
+  <title>MRQ End of Shift Report</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <!-- PDFMake -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.min.js"></script>
 
   <style>
     :root {
       --border: #222;
       --muted: #666;
       --accent: #0b5cab;
+      --bg: #f0f2f5;
     }
 
     * { box-sizing: border-box; }
@@ -20,7 +22,7 @@
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
-      background: #f0f2f5;
+      background: var(--bg);
       color: #111;
     }
 
@@ -59,19 +61,26 @@
       font-weight: 700;
     }
 
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-secondary { background: #e9ecef; color: #111; }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #e9ecef;
+      color: #111;
+    }
 
     .container {
       display: grid;
-      grid-template-columns: 420px 1fr;
+      grid-template-columns: 430px 1fr;
       gap: 18px;
       padding: 18px;
       align-items: start;
     }
 
     .panel {
-      background: white;
+      background: #fff;
       border: 1px solid #ddd;
       border-radius: 10px;
       padding: 16px;
@@ -84,7 +93,10 @@
       padding-bottom: 8px;
     }
 
-    .form-grid { display: grid; gap: 10px; }
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
 
     .field {
       display: grid;
@@ -189,11 +201,12 @@
       width: 100%;
       max-width: 1000px;
       margin: 0 auto;
-      background: white;
+      background: #fff;
       color: #000;
       border: 1px solid var(--border);
       font-size: 12px;
       line-height: 1.25;
+      padding: 8px;
     }
 
     .report table {
@@ -210,9 +223,11 @@
     }
 
     .report .center { text-align: center; }
+    .report .right { text-align: right; }
     .report .title {
       font-size: 18px;
       font-weight: 700;
+      letter-spacing: 0.2px;
     }
     .report .small { font-size: 10px; }
     .report .section {
@@ -222,7 +237,6 @@
     }
     .report .gray { background: #f1f1f1; }
     .report .label { font-weight: 700; white-space: nowrap; }
-
     .report .checkbox {
       display: inline-block;
       width: 12px;
@@ -231,7 +245,6 @@
       vertical-align: middle;
       margin: 0 4px 0 0;
     }
-
     .report .check-yes::after {
       content: "✓";
       font-size: 12px;
@@ -240,15 +253,30 @@
       top: -1px;
       left: 1px;
     }
-
     .report .dynamic-note {
       font-size: 10px;
       color: #444;
       padding-top: 2px;
+      margin-bottom: 6px;
+    }
+
+    .logo-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      height: 52px;
+    }
+
+    .logo-box img {
+      display: block;
+      max-height: 44px;
+      max-width: 100%;
     }
 
     @media print {
-      body { background: white; }
+      body { background: #fff; }
       header, .panel.form-panel, .no-print { display: none !important; }
       .container {
         grid-template-columns: 1fr;
@@ -257,13 +285,13 @@
       .preview-wrap {
         border: none;
         padding: 0;
-        background: white;
+        background: #fff;
       }
       .report {
         border: none;
         max-width: none;
         width: 100%;
-        font-size: 10.5px;
+        padding: 0;
       }
       @page {
         size: A4 portrait;
@@ -275,10 +303,10 @@
 <body>
   <header class="no-print">
     <h1>MRQ End of Shift Report Generator</h1>
-    <p>Fill in the form, preview the report, and export it to PDF.</p>
+    <p>Enter report details, preview the form, then export a selectable-text PDF.</p>
     <div class="toolbar">
       <button class="btn-primary" onclick="exportToPDF()">Export to PDF</button>
-      <button class="btn-secondary" onclick="window.print()">Print</button>
+      <button class="btn-secondary" onclick="window.print()">Print Preview</button>
       <button class="btn-secondary" onclick="fillDemo()">Load Demo Data</button>
       <button class="btn-secondary" onclick="clearForm()">Clear Form</button>
     </div>
@@ -386,7 +414,11 @@
       <div class="report" id="report">
         <table>
           <tr>
-            <td style="width: 120px; text-align:center;"><div class="small">[LOGO]</div></td>
+            <td style="width: 120px; text-align:center;">
+              <div class="logo-box">
+                <img id="mrqLogo" alt="MRQ logo" />
+              </div>
+            </td>
             <td class="center">
               <div class="title">MARINE RESCUE QUEENSLAND</div>
               <div class="title">END OF SHIFT REPORT</div>
@@ -439,7 +471,8 @@
           </tr>
           <tr>
             <td>MSQ incident: <span id="msqCheck" class="checkbox"></span> Yes<br><span class="label">Activity Log #:</span> <span id="msqLogOut"></span></td>
-            <td></td><td></td>
+            <td></td>
+            <td></td>
           </tr>
         </table>
 
@@ -458,6 +491,20 @@
   </div>
 
   <script>
+    // MRQ logo as inline SVG data URI
+    const mrqLogoSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="220" height="80" viewBox="0 0 220 80">
+        <rect width="220" height="80" fill="white"/>
+        <circle cx="38" cy="40" r="22" fill="#0b5cab"/>
+        <path d="M24 42 L38 18 L52 42 Z" fill="#ffffff"/>
+        <path d="M22 48 H54" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+        <text x="72" y="35" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#0b5cab">MRQ</text>
+        <text x="72" y="54" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#333">Marine Rescue Queensland</text>
+      </svg>
+    `;
+    document.getElementById("mrqLogo").src =
+      "data:image/svg+xml;charset=utf-8," + encodeURIComponent(mrqLogoSvg);
+
     function escapeHtml(value) {
       return String(value ?? "")
         .replaceAll("&", "&amp;")
@@ -482,10 +529,10 @@
       return [d, t].filter(Boolean).join(" ");
     }
 
-    function addCard(containerId, title, inputsHtml, classes = "") {
+    function addCard(containerId, title, inputsHtml) {
       const container = document.getElementById(containerId);
       const wrap = document.createElement("div");
-      wrap.className = "entry-card " + classes;
+      wrap.className = "entry-card";
       wrap.innerHTML = `
         <div class="topline">
           <strong>${title}</strong>
@@ -499,11 +546,10 @@
       };
       container.appendChild(wrap);
       updatePreview();
-      return wrap;
     }
 
     function addRosteredStaff(name = "", role = "", hours = "") {
-      addCard("rosteredInputs", `Rostered staff`, `
+      addCard("rosteredInputs", "Rostered staff", `
         <div class="inline">
           <div class="field"><label>Full name</label><input type="text" class="r-name" value="${escapeHtml(name)}"></div>
           <div class="field"><label>Role</label><input type="text" class="r-role" value="${escapeHtml(role)}"></div>
@@ -513,7 +559,7 @@
     }
 
     function addNonAttendance(name = "", hours = "", reason = "") {
-      addCard("nonAttendanceInputs", `Non-attendance`, `
+      addCard("nonAttendanceInputs", "Non-attendance", `
         <div class="inline">
           <div class="field"><label>Full name</label><input type="text" class="na-name" value="${escapeHtml(name)}"></div>
           <div class="field"><label>Rostered hours</label><input type="text" class="na-hours" value="${escapeHtml(hours)}"></div>
@@ -523,7 +569,7 @@
     }
 
     function addVehicle(a = "", b = "", c = "", d = "", e = "", f = "") {
-      addCard("vehicleInputs", `Vehicle or vessel`, `
+      addCard("vehicleInputs", "Vehicle or vessel", `
         <div class="field"><label>Registration</label><input type="text" class="v-a" value="${escapeHtml(a)}"></div>
         <div class="inline">
           <div class="field"><label>Name of driver / vessel master</label><input type="text" class="v-b" value="${escapeHtml(b)}"></div>
@@ -538,7 +584,7 @@
     }
 
     function addActivity(s = "", e = "", a = "", o = "", v = "") {
-      addCard("activityInputs", `Activity`, `
+      addCard("activityInputs", "Activity", `
         <div class="inline">
           <div class="field"><label>Start time</label><input type="text" class="a-start" value="${escapeHtml(s)}"></div>
           <div class="field"><label>End time</label><input type="text" class="a-end" value="${escapeHtml(e)}"></div>
@@ -549,10 +595,10 @@
       `);
     }
 
-    function makeTable(headers, rows) {
+    function tableToHtml(title, headers, rows) {
       let html = `<table>`;
-      html += `<tr><td class="section" colspan="${headers.length}">${headers.section}</td></tr>`;
-      html += `<tr class="gray">${headers.cols.map(h => `<th>${h}</th>`).join("")}</tr>`;
+      html += `<tr><td class="section" colspan="${headers.length}">${title}</td></tr>`;
+      html += `<tr class="gray">${headers.map(h => `<th>${escapeHtml(h)}</th>`).join("")}</tr>`;
       rows.forEach(row => {
         html += `<tr>${row.map(cell => `<td>${escapeHtml(cell || "")}</td>`).join("")}</tr>`;
       });
@@ -596,39 +642,30 @@
       ]));
 
       const html = [];
-
-      html.push(makeTable(
-        {
-          section: "ROSTERED STAFF",
-          cols: ["Full name", "Role", "Rostered hours"]
-        },
+      html.push(tableToHtml(
+        "ROSTERED STAFF",
+        ["Full name", "Role", "Rostered hours"],
         rostered.length ? rostered : [["", "", ""]]
       ));
       html.push(`<div class="dynamic-note">To add or delete rostered staff, please select from the drop-down list and click in the checkbox [ ]</div>`);
 
-      html.push(makeTable(
-        {
-          section: "RECORD NON-ATTENDANCE OF ROSTERED STAFF",
-          cols: ["Full name", "Rostered hours", "Reason"]
-        },
+      html.push(tableToHtml(
+        "RECORD NON-ATTENDANCE OF ROSTERED STAFF",
+        ["Full name", "Rostered hours", "Reason"],
         nonAtt.length ? nonAtt : [["", "", ""]]
       ));
       html.push(`<div class="dynamic-note">To add or delete non-attendance staff, please select from the drop-down list and click in the checkbox [ ]</div>`);
 
-      html.push(makeTable(
-        {
-          section: "VEHICLE AND VESSEL USE",
-          cols: ["Registration of vehicle/vessel", "Name of driver/vessel master", "Crew", "Time out", "Time in", "Purpose of use"]
-        },
+      html.push(tableToHtml(
+        "VEHICLE AND VESSEL USE",
+        ["Registration of vehicle/vessel", "Name of driver/vessel master", "Crew", "Time out", "Time in", "Purpose of use"],
         vehicles.length ? vehicles : [["", "", "", "", "", ""]]
       ));
       html.push(`<div class="dynamic-note">To add or delete vehicles or vessels, please select from the drop-down list and click in the checkbox [ ]</div>`);
 
-      html.push(makeTable(
-        {
-          section: "ACTIVITY LOG",
-          cols: ["Start time", "End time", "Activity/request for service", "Actions/Outcomes and staff", "Vehicles / vessels involved"]
-        },
+      html.push(tableToHtml(
+        "ACTIVITY LOG",
+        ["Start time", "End time", "Activity/request for service", "Actions/Outcomes and staff", "Vehicles / vessels involved"],
         activities.length ? activities : [["", "", "", "", ""]]
       ));
       html.push(`<div class="dynamic-note">To add or delete activity please select from the drop-down list and click in the checkbox [ ]</div>`);
@@ -734,43 +771,248 @@
       updatePreview();
     }
 
-    async function exportToPDF() {
-      updatePreview();
-      const report = document.getElementById("report");
-      const { jsPDF } = window.jspdf;
-
-      const canvas = await html2canvas(report, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff"
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position -= pageHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save("MRQ-End-of-Shift-Report.pdf");
+    function clean(v) {
+      return String(v || "").trim();
     }
 
-    // Start with one blank row in each repeating section
+    function buildPdfRows(selector, cols) {
+      return [...document.querySelectorAll(selector + " .entry-card")].map(card => {
+        const map = {};
+        cols.forEach(col => {
+          const el = card.querySelector("." + col.cls);
+          map[col.key] = clean(el && el.value);
+        });
+        return map;
+      });
+    }
+
+    function makePdfTable(title, headers, rows, widths) {
+      return {
+        table: {
+          headerRows: 2,
+          widths: widths,
+          body: [
+            [{ text: title, style: "section", colSpan: headers.length }, ...Array(headers.length - 1).fill({})],
+            headers.map(h => ({ text: h, style: "th" })),
+            ...rows.map(r => r.map(c => ({ text: c || "", style: "td" })))
+          ]
+        },
+        layout: "mrqTable"
+      };
+    }
+
+    function yesNoMark(val) {
+      return val ? "☑" : "☐";
+    }
+
+    async function exportToPDF() {
+      updatePreview();
+
+      const rostered = buildPdfRows("#rosteredInputs", [
+        { key: "name", cls: "r-name" },
+        { key: "role", cls: "r-role" },
+        { key: "hours", cls: "r-hours" }
+      ]);
+
+      const nonAtt = buildPdfRows("#nonAttendanceInputs", [
+        { key: "name", cls: "na-name" },
+        { key: "hours", cls: "na-hours" },
+        { key: "reason", cls: "na-reason" }
+      ]);
+
+      const vehicles = buildPdfRows("#vehicleInputs", [
+        { key: "a", cls: "v-a" },
+        { key: "b", cls: "v-b" },
+        { key: "c", cls: "v-c" },
+        { key: "d", cls: "v-d" },
+        { key: "e", cls: "v-e" },
+        { key: "f", cls: "v-f" }
+      ]);
+
+      const activities = buildPdfRows("#activityInputs", [
+        { key: "s", cls: "a-start" },
+        { key: "e", cls: "a-end" },
+        { key: "a", cls: "a-act" },
+        { key: "o", cls: "a-out" },
+        { key: "v", cls: "a-veh" }
+      ]);
+
+      const unitName = clean(document.getElementById("unitName").value);
+      const udoName = clean(document.getElementById("udoName").value);
+
+      const dd = {
+        pageSize: "A4",
+        pageMargins: [18, 18, 18, 18],
+        defaultStyle: { fontSize: 8.5 },
+        styles: {
+          title: { fontSize: 13, bold: true, alignment: "center" },
+          subtitle: { fontSize: 11, bold: true, alignment: "center" },
+          section: { fontSize: 9.5, bold: true, alignment: "left", fillColor: "#f3f3f3" },
+          th: { bold: true, fillColor: "#f1f1f1" },
+          td: { fontSize: 8 },
+          label: { bold: true }
+        },
+        images: {
+          mrqLogo: document.getElementById("mrqLogo").src
+        },
+        content: [
+          {
+            columns: [
+              { image: "mrqLogo", width: 50 },
+              {
+                stack: [
+                  { text: "MARINE RESCUE QUEENSLAND", style: "title" },
+                  { text: "END OF SHIFT REPORT", style: "title" }
+                ],
+                width: "*"
+              },
+              {
+                stack: [
+                  { text: "MRQ 00010", alignment: "center", fontSize: 8 },
+                  { text: "06/24 Δ1", alignment: "center", fontSize: 8 }
+                ],
+                width: 60
+              }
+            ],
+            margin: [0, 0, 0, 6]
+          },
+
+          {
+            table: {
+              widths: [60, "*", 70, "*"],
+              body: [
+                [
+                  { text: "MRQ unit name:", style: "label" }, unitName,
+                  { text: "Unit Duty Officer name:", style: "label" }, udoName
+                ],
+                [
+                  { text: "Shift start:", style: "label" }, `${clean(document.getElementById("shiftStartDate").value)} ${clean(document.getElementById("shiftStartTime").value)}`,
+                  { text: "Shift end:", style: "label" }, `${clean(document.getElementById("shiftEndDate").value)} ${clean(document.getElementById("shiftEndTime").value)}`
+                ]
+              ]
+            },
+            layout: "mrqTable",
+            margin: [0, 0, 0, 6]
+          },
+
+          makePdfTable(
+            "ROSTERED STAFF",
+            ["Full name", "Role", "Rostered hours"],
+            rostered.length ? rostered.map(r => [r.name, r.role, r.hours]) : [["", "", ""]],
+            [170, 120, 70]
+          ),
+          { text: "To add or delete rostered staff, please select from the drop-down list and click in the checkbox [ ]", fontSize: 7, margin: [0, 2, 0, 5] },
+
+          makePdfTable(
+            "RECORD NON-ATTENDANCE OF ROSTERED STAFF",
+            ["Full name", "Rostered hours", "Reason"],
+            nonAtt.length ? nonAtt.map(r => [r.name, r.hours, r.reason]) : [["", "", ""]],
+            [170, 70, 120]
+          ),
+          { text: "To add or delete non-attendance staff, please select from the drop-down list and click in the checkbox [ ]", fontSize: 7, margin: [0, 2, 0, 5] },
+
+          makePdfTable(
+            "VEHICLE AND VESSEL USE",
+            ["Registration", "Driver or vessel master", "Crew", "Time out", "Time in", "Purpose of use"],
+            vehicles.length ? vehicles.map(v => [v.a, v.b, v.c, v.d, v.e, v.f]) : [["", "", "", "", "", ""]],
+            [70, 90, 35, 40, 40, 105]
+          ),
+          { text: "To add or delete vehicles or vessels, please select from the drop-down list and click in the checkbox [ ]", fontSize: 7, margin: [0, 2, 0, 5] },
+
+          makePdfTable(
+            "ACTIVITY LOG",
+            ["Start time", "End time", "Activity / request", "Actions / outcomes and staff", "Vehicles / vessels"],
+            activities.length ? activities.map(a => [a.s, a.e, a.a, a.o, a.v]) : [["", "", "", "", ""]],
+            [40, 40, 100, 200, 60]
+          ),
+          { text: "To add or delete activity please select from the drop-down list and click in the checkbox [ ]", fontSize: 7, margin: [0, 2, 0, 5] },
+
+          {
+            table: {
+              widths: ["*", "*", "*"],
+              body: [
+                [
+                  { text: "REPORTABLE EVENTS", style: "section" },
+                  { text: "UDO CHECKLIST", style: "section" },
+                  { text: "QPS SYSTEM", style: "section" }
+                ],
+                [
+                  {
+                    text:
+                      `MRQ member injury/illness: ${yesNoMark(document.getElementById("injuryYes").checked)} Yes\n` +
+                      `Activity Log #: ${clean(document.getElementById("injuryLog").value)}\n\n` +
+                      `MRQ damage vehicle or vessel: ${yesNoMark(document.getElementById("damageYes").checked)} Yes\n` +
+                      `Activity Log #: ${clean(document.getElementById("damageLog").value)}\n\n` +
+                      `Significant events: ${yesNoMark(document.getElementById("significantYes").checked)} Yes\n` +
+                      `Activity Log #: ${clean(document.getElementById("significantLog").value)}\n\n` +
+                      `AMSA incident: ${yesNoMark(document.getElementById("amsaYes").checked)} Yes\n` +
+                      `Activity Log #: ${clean(document.getElementById("amsaLog").value)}\n\n` +
+                      `MSQ incident: ${yesNoMark(document.getElementById("msqYes").checked)} Yes\n` +
+                      `Activity Log #: ${clean(document.getElementById("msqLog").value)}`,
+                    fontSize: 8
+                  },
+                  {
+                    text:
+                      `MRQ 0006 completed ${yesNoMark(document.getElementById("mrq6Yes").checked)} Yes ${yesNoMark(!document.getElementById("mrq6Yes").checked)} No\n\n` +
+                      `MRQ 0014 Significant Event Report completed ${yesNoMark(document.getElementById("mrq14Yes").checked)} Yes ${yesNoMark(!document.getElementById("mrq14Yes").checked)} No\n\n` +
+                      `AMSA Form 18 or 19 completed ${yesNoMark(document.getElementById("amsaFormYes").checked)} Yes ${yesNoMark(!document.getElementById("amsaFormYes").checked)} No\n\n` +
+                      `TMR F3071 completed ${yesNoMark(document.getElementById("tmrYes").checked)} Yes ${yesNoMark(!document.getElementById("tmrYes").checked)} No`,
+                    fontSize: 8
+                  },
+                  {
+                    text:
+                      `I/INRS System\n\n` +
+                      `${clean(document.getElementById("qpsSystem").value)}\n\n` +
+                      `SEMS\n\n` +
+                      `OffShore SMS`,
+                    fontSize: 8
+                  }
+                ]
+              ]
+            },
+            layout: "mrqTable",
+            margin: [0, 0, 0, 6]
+          },
+
+          {
+            table: {
+              widths: [260, "*"],
+              body: [
+                [
+                  `Any non-staffed coastal station radio periods ${yesNoMark(document.getElementById("coastalRadioYes").checked)} Yes`,
+                  `Duration of hours: ${clean(document.getElementById("coastalRadioHours").value)}`
+                ],
+                [
+                  `Any non-staffing of vessel periods ${yesNoMark(document.getElementById("vesselNoStaffYes").checked)} Yes`,
+                  `Duration of hours: ${clean(document.getElementById("vesselNoStaffHours").value)}`
+                ]
+              ]
+            },
+            layout: "mrqTable"
+          }
+        ],
+        pageBreakBefore: function(currentNode) {
+          return false;
+        }
+      };
+
+      pdfMake.createPdf(dd).download("MRQ-End-of-Shift-Report.pdf");
+    }
+
+    pdfMake.tableLayouts = {
+      mrqTable: {
+        hLineWidth: function() { return 0.7; },
+        vLineWidth: function() { return 0.7; },
+        hLineColor: function() { return "#222"; },
+        vLineColor: function() { return "#222"; },
+        paddingLeft: function() { return 4; },
+        paddingRight: function() { return 4; },
+        paddingTop: function() { return 3; },
+        paddingBottom: function() { return 3; }
+      }
+    };
+
+    // initial rows
     addRosteredStaff();
     addNonAttendance();
     addVehicle();
