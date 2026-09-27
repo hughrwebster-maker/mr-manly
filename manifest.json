@@ -1,8 +1,8 @@
 {
   "name": "MRQ Manly Reference App",
   "short_name": "MRQ-MANLY",
-  "start_url": "/hughrwebster-maker/index.html",
-  "scope": "/hughrwebster-maker/",
+  "start_url": "/mr-manly/index.html",
+  "scope": "/mr-manly/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#007aff",
