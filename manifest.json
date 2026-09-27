@@ -1,7 +1,7 @@
 {
   "name": "MRQ Manly Reference App",
   "short_name": "MRQ-MANLY",
-  "start_url": "/mr-manly/index.html",
+  "start_url": "/mr-manly/",
   "scope": "/mr-manly/",
   "display": "standalone",
   "background_color": "#ffffff",
