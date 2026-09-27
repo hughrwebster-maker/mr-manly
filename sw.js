@@ -2,7 +2,6 @@
 const CACHE_NAME = 'static-cache-v1';
 const ASSETS = [
   '/mr-manly/',
-  '/mr-manly/index.html',
   '/mr-manly/style.css',
   '/mr-manly/icon-192.png'
 ];
