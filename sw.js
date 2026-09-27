@@ -1,10 +1,10 @@
 // sw.js
 const CACHE_NAME = 'static-cache-v1';
 const ASSETS = [
-  '/hughrwebster-maker/',
-  '/hughrwebster-maker/index.html',
-  '/hughrwebster-maker/style.css',
-  '/hughrwebster-maker/icon-192.png'
+  '/mr-manly/',
+  '/mr-manly/index.html',
+  '/mr-manly/style.css',
+  '/mr-manly/icon-192.png'
 ];
 
 self.addEventListener('install', (e) => {
