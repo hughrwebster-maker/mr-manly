@@ -1,6 +1,11 @@
 // sw.js
 const CACHE_NAME = 'static-cache-v1';
-const ASSETS = ['/', '/index.html', '/style.css', '/icon-192.png'];
+const ASSETS = [
+  '/hughrwebster-maker/mr-manly/',
+  '/hughrwebster-maker/mr-manly/index.html',
+  '/hughrwebster-maker/mr-manly/style.css',
+  '/hughrwebster-maker/mr-manly/icon-192.png'
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
