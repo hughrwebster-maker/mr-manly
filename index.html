@@ -5,6 +5,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Marine Rescue Manly Handy Reference Guide</title>
+ <link rel="manifest" href="manifest.json">
+  
+  <!-- iOS web app capability -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="StaticApp">
+  
+  <!-- App Icon for iOS -->
+  <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="style.css">
     <style>
         /* Base styles to give the table visible borders and padding */
@@ -33,7 +42,7 @@
 <h1>Marine Rescue Manly Handy Reference Guide</h1>
 </header>
 
-
+<script>navigator.serviceWorker.register('/sw.js');</script>
 <section>
 <h2>Operational Tools</h2>
 <ul class="wiki-links">
@@ -194,6 +203,53 @@
         </tr>
     </table>
 </section>
+	<button id="pwa-install-btn" style="display: none; padding: 12px 24px; background-color: #007aff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+  Install App
+</button>
+<script>
+// Variable to store the install event for later use
+let deferredPrompt;
+const installBtn = document.getElementById('pwa-install-btn');
 
+// 1. Listen for the browser's built-in install invitation
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevent older Android browsers from automatically showing their own prompt
+  e.preventDefault();
+  
+  // Save the event so it can be triggered with our button later
+  deferredPrompt = e;
+  
+  // Make our custom install button visible
+  installBtn.style.display = 'block';
+});
+
+// 2. Handle the click event on our custom button
+installBtn.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  
+  // Show the native browser installation dialog prompt
+  deferredPrompt.prompt();
+  
+  // Wait for the user to accept or dismiss the choice
+  const { outcome } = await deferredPrompt.userChoice;
+  console.log(`User response to the install prompt: ${outcome}`);
+  
+  // Clear the saved prompt variable since it can only be used once
+  deferredPrompt = null;
+  
+  // Hide our custom button again
+  installBtn.style.display = 'none';
+});
+
+// 3. Optional: Hide the button if the app is successfully installed
+window.addEventListener('appinstalled', () => {
+  console.log('PWA was successfully installed!');
+  installBtn.style.display = 'none';
+  deferredPrompt = null;
+});
+
+
+	
+</script>
 </body>
 </html>
